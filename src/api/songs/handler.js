@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable no-underscore-dangle */
 const ClientError = require('../../exceptions/ClientError');
 
@@ -33,7 +34,7 @@ class SongsHandler {
       });
       response.code(201);
       return response;
-    } catch (error ){
+    } catch (error) {
       if (error instanceof ClientError) {
         const response = h.response({
           status: 'fail',
@@ -41,7 +42,7 @@ class SongsHandler {
         });
         response.code(error.statusCode);
         return response;
-      };
+      }
 
       const response = h.response({
         status: 'fail',
@@ -72,8 +73,8 @@ class SongsHandler {
       return {
         status: 'success',
         data: {
-         song,
-       },
+          song,
+        },
       };
     } catch (error) {
       if (error instanceof ClientError) {
@@ -83,7 +84,7 @@ class SongsHandler {
         });
         response.code(error.statusCode);
         return response;
-      };
+      }
       const response = h.response({
         status: 'fail',
         message: 'Maaf, terjadi kegagalan pada server kami',
@@ -112,7 +113,7 @@ class SongsHandler {
         });
         response.code(error.statusCode);
         return response;
-      };
+      }
       const response = h.response({
         status: 'fail',
         message: 'Maaf, terjadi kegagalan pada server kami',
@@ -127,7 +128,7 @@ class SongsHandler {
     try {
       const { songId } = request.params;
       await this._service.deleteSongById(songId);
-  
+
       return {
         status: 'success',
         message: 'lagu berhasil dihapus',
