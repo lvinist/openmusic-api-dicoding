@@ -5,7 +5,7 @@ const ProducerService = {
     const connection = await amqp.connect(process.env.RABBITMQ_SERVER);
     const channel = await connection.createChannel();
 
-    channel.assertQueue(queue, {
+    await channel.assertQueue(queue, {
       durable: true,
     });
     await channel.sendToQueue(queue, Buffer.from(message));

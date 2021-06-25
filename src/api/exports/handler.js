@@ -3,8 +3,9 @@
 const ClientError = require('../../exceptions/ClientError');
 
 class ExportsHandler {
-  constructor(service, validator) {
-    this._service = service;
+  constructor(producerService, playlistServices, validator) {
+    this._producerService = producerService;
+    this._playlistServices = playlistServices;
     this._validator = validator;
 
     this.postExportSongsPlaylistHandler = this.postExportSongsPlaylistHandler.bind(this);
@@ -15,11 +16,15 @@ class ExportsHandler {
       this._validator.validateExportsPayload(request.payload);
 
       const message = {
-        userId: request.auth.credentials,
+        playlistId: request.params,
         targetEmail: request.payload.targetEmail,
       };
 
-      await this._service.sendMessage('export:Songsplaylists', JSON.stringify(message));
+      const { id: credentialId } = request.auth.credentials;
+      const { playlistId } = request.params;
+
+      await this._playlistServices.verifyPlaylistAccess(playlistId, credentialId);
+      await this._producerService.sendMessage('export:Songsplaylists', JSON.stringify(message));
 
       const response = h.response({
         status: 'success',
