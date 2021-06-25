@@ -7,9 +7,10 @@ const NotFoundError = require('../../exceptions/NotFoundError');
 const AuthorizationsError = require('../../exceptions/AuthorizationsError');
 
 class PlaylistServices {
-  constructor(collaborationsService) {
+  constructor(collaborationsService, cacheService) {
     this._pool = new Pool();
     this._collaborationsService = collaborationsService;
+    this._cacheService = cacheService;
   }
 
   async addPlaylist({ name, owner }) {
@@ -55,18 +56,30 @@ class PlaylistServices {
     if (!result.rows.length) {
       throw new InvariantError('Lagu gagal ditambahkan ke playlist');
     }
+
+    await this._cacheService.delete(`songsPlaylist:${playlistId}`);
+    return result.rows[0].id;
   }
 
   async getSongsByPlaylistId({ playlistId }) {
-    const query = {
-      text: `SELECT songs.id, songs.title, songs.performer FROM songs
+    try {
+      const result = await this._cacheService.get(`songsPlaylist:${playlistId}`);
+      return JSON.parse(result);
+    } catch (error) {
+      const query = {
+        text: `SELECT songs.id, songs.title, songs.performer FROM songs
             INNER JOIN playlistsongs ON playlistsongs.song_id = songs.id
             WHERE playlist_id = $1`,
-      values: [playlistId],
-    };
+        values: [playlistId],
+      };
 
-    const result = await this._pool.query(query);
-    return result.rows.map(mapSongsPlaylistDBtoModel);
+      const result = await this._pool.query(query);
+      const mappedResult = result.rows.map(mapSongsPlaylistDBtoModel);
+
+      await this._cacheService.set(`songsPlaylist:${playlistId}`, JSON.stringify(mappedResult));
+
+      return mappedResult;
+    }
   }
 
   async deleteSongFromPlaylist(playlistId, songId) {
@@ -80,6 +93,9 @@ class PlaylistServices {
     if (!result.rows.length) {
       throw new InvariantError('Lagu gagal dihapus dari playlist. Id tidak ditemukan');
     }
+
+    await this._cacheService.delete(`songsPlaylist:${playlistId}`);
+    return result.rows[0].id;
   }
 
   async deletePlaylistByPlaylistId(playlistId) {
