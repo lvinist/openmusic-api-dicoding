@@ -15,15 +15,17 @@ class ExportsHandler {
     try {
       this._validator.validateExportsPayload(request.payload);
 
+      const { id: credentialId } = request.auth.credentials;
+      const id = request.params.playlistId;
+
       const message = {
-        playlistId: request.params,
+        id,
         targetEmail: request.payload.targetEmail,
       };
 
-      const { id: credentialId } = request.auth.credentials;
-      const { playlistId } = request.params;
+      console.log(id);
 
-      await this._playlistServices.verifyPlaylistAccess(playlistId, credentialId);
+      await this._playlistServices.verifyPlaylistAccess(id, credentialId);
       await this._producerService.sendMessage('export:Songsplaylists', JSON.stringify(message));
 
       const response = h.response({
